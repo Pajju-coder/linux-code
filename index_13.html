@@ -1,0 +1,886 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The Letter I Kept</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400&family=JetBrains+Mono:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  /* ============================================================
+     CUSTOMIZE ME
+     - Replace music.mp3 in the same folder with your own track.
+     - Change SECRET_PASSWORD further down in the <script>.
+     - Replace the placeholder letter text and photo captions
+       with your own words — search for "EDIT:" comments.
+     ============================================================ */
+
+  :root{
+    --bg:        #0a0d16;
+    --surface:   #10141f;
+    --surface-2: #151b29;
+    --ink:       #ece8e0;
+    --ink-dim:   #9aa0b5;
+    --ink-faint: #8189a0;
+    --rose:      #b98299;
+    --amber:     #d9a066;
+    --hairline:  rgba(236,232,224,0.12);
+  }
+
+  *{ box-sizing: border-box; }
+  html{ scroll-behavior: smooth; }
+  body{
+    margin:0;
+    background: var(--bg);
+    color: var(--ink);
+    font-family:'JetBrains Mono', monospace;
+    overflow-x: hidden;
+    -webkit-font-smoothing: antialiased;
+  }
+  h1,h2,h3, .display{
+    font-family:'Cormorant Garamond', serif;
+    font-weight: 500;
+    letter-spacing: 0.01em;
+  }
+  .eyebrow{
+    font-size: 0.72rem;
+    letter-spacing: 0.28em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+  }
+  a, button{ font-family: inherit; }
+
+  /* -------- starfield -------- */
+  #stars{
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+  }
+
+  /* -------- intro / glitch overlay -------- */
+  #intro{
+    position: fixed; inset:0; z-index: 100;
+    background: var(--bg);
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
+    gap: 28px;
+    transition: opacity 1s ease, visibility 1s ease;
+  }
+  #intro.hidden{ opacity:0; visibility:hidden; pointer-events:none; }
+  .glitch-wrap{ position:relative; text-align:center; padding: 0 24px;}
+  .glitch{
+    font-size: clamp(2.2rem, 7vw, 4.6rem);
+    color: var(--ink);
+    position:relative;
+    letter-spacing: 0.02em;
+  }
+  .glitch::before, .glitch::after{
+    content: attr(data-text);
+    position:absolute; left:0; top:0; width:100%;
+    overflow:hidden;
+  }
+  .glitch::before{
+    color: var(--rose);
+    animation: glitchTop 3.2s infinite linear;
+    clip-path: inset(0 0 60% 0);
+  }
+  .glitch::after{
+    color: var(--amber);
+    animation: glitchBottom 2.6s infinite linear;
+    clip-path: inset(60% 0 0 0);
+  }
+  @keyframes glitchTop{
+    0%,92%,100%{ transform:translate(0,0); opacity:0; }
+    93%{ transform:translate(-3px,-1px); opacity:0.8; }
+    95%{ transform:translate(2px,1px); opacity:0.8; }
+    97%{ transform:translate(-1px,0); opacity:0; }
+  }
+  @keyframes glitchBottom{
+    0%,90%,100%{ transform:translate(0,0); opacity:0; }
+    91%{ transform:translate(3px,1px); opacity:0.7; }
+    94%{ transform:translate(-2px,-1px); opacity:0.7; }
+    96%{ transform:translate(1px,0); opacity:0; }
+  }
+  #enterBtn{
+    background: transparent;
+    border: 1px solid var(--hairline);
+    color: var(--ink);
+    padding: 14px 30px;
+    font-size: 0.78rem;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: border-color .3s, color .3s, letter-spacing .3s;
+  }
+  #enterBtn:hover{ border-color: var(--rose); color: var(--rose); letter-spacing: 0.3em; }
+  .intro-sub{ color: var(--ink-faint); font-size: 0.85rem; text-align:center; max-width: 340px; line-height:1.6; }
+
+  /* -------- layout -------- */
+  main{ position:relative; z-index: 1; }
+  section{
+    padding: 90px 24px;
+    max-width: 720px;
+    margin: 0 auto;
+  }
+  .center{ text-align:center; }
+  .divider{
+    width: 1px; height: 60px;
+    background: linear-gradient(var(--hairline), transparent);
+    margin: 0 auto;
+  }
+
+  /* -------- clock -------- */
+  #clockSection{ padding-top: 130px; }
+  #clock{
+    font-size: clamp(2rem, 6vw, 3.2rem);
+    letter-spacing: 0.04em;
+    color: var(--ink);
+  }
+  #dateLine{ margin-top: 10px; color: var(--ink-faint); font-size: 0.85rem; letter-spacing: 0.08em;}
+
+  /* -------- letter / terminal -------- */
+  .terminal{
+    background: var(--surface);
+    border: 1px solid var(--hairline);
+    border-radius: 4px;
+    padding: 32px 28px;
+    margin-top: 36px;
+    min-height: 260px;
+  }
+  .terminal-head{
+    display:flex; gap:7px; margin-bottom: 22px;
+  }
+  .dot{ width:9px; height:9px; border-radius:50%; background: var(--hairline); }
+  #letterText{
+    font-size: 1.02rem;
+    line-height: 1.9;
+    color: var(--ink);
+    white-space: pre-wrap;
+  }
+  .cursor{
+    display:inline-block; width: 8px; height: 1.1em; background: var(--rose);
+    vertical-align: text-bottom; margin-left: 2px;
+    animation: blink 0.9s steps(1) infinite;
+  }
+  @keyframes blink{ 50%{ opacity:0; } }
+
+  /* -------- lantern release -------- */
+  #lanternStage{
+    position: relative;
+    height: 340px;
+    margin: 0 auto;
+    max-width: 560px;
+    border: 1px solid var(--hairline);
+    border-radius: 6px;
+    overflow: hidden;
+    background: radial-gradient(ellipse at 50% 100%, rgba(217,160,102,0.08), transparent 60%), var(--surface);
+  }
+  #lanternCanvas{ width:100%; height:100%; display:block; }
+  #lanternBtn{
+    margin-top: 22px;
+    background: transparent;
+    border: 1px solid var(--amber);
+    color: var(--amber);
+    padding: 14px 30px;
+    font-size: 0.78rem;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    cursor: pointer;
+    border-radius: 3px;
+    transition: background .3s, color .3s;
+  }
+  #lanternBtn:hover{ background: var(--amber); color:#10141f; }
+
+  /* -------- secret button -------- */
+  .secret-zone{ text-align:center; margin-top: 60px; }
+  #secretBtn{
+    background: var(--surface-2);
+    border: 1px solid var(--hairline);
+    color: var(--ink);
+    padding: 16px 34px;
+    font-size: 0.78rem;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    cursor:pointer;
+    border-radius: 3px;
+    transition: border-color .3s, color .3s;
+  }
+  #secretBtn:hover{ border-color: var(--amber); color: var(--amber); }
+
+  .modal-backdrop{
+    position: fixed; inset:0; background: rgba(6,8,13,0.86);
+    display:flex; align-items:center; justify-content:center;
+    z-index: 200; opacity:0; visibility:hidden; transition: opacity .3s;
+    padding: 20px;
+  }
+  .modal-backdrop.show{ opacity:1; visibility:visible; }
+  .modal{
+    background: var(--surface); border: 1px solid var(--hairline);
+    border-radius: 6px; padding: 34px 28px; max-width: 420px; width:100%;
+    text-align:center;
+  }
+  .modal input{
+    width:100%; margin-top:18px; padding: 12px 14px;
+    background: var(--bg); border: 1px solid var(--hairline); border-radius: 3px;
+    color: var(--ink); font-family:'JetBrains Mono', monospace; font-size: 0.95rem;
+    text-align:center; letter-spacing: 0.1em;
+  }
+  .modal input:focus{ outline: 2px solid var(--rose); outline-offset: 2px; }
+  .modal-actions{ display:flex; gap:10px; margin-top: 20px; justify-content:center; }
+  .modal button{
+    padding: 10px 22px; border-radius: 3px; cursor:pointer;
+    font-size: 0.78rem; letter-spacing: 0.12em; text-transform: uppercase;
+  }
+  #unlockBtn{ background: var(--rose); border:none; color: #10141f; font-weight:600; }
+  #cancelBtn{ background: transparent; border: 1px solid var(--hairline); color: var(--ink-faint); }
+  #modalError{ color: var(--amber); font-size: 0.78rem; margin-top: 12px; min-height: 1em; }
+  #secretContent{
+    text-align:left; line-height: 1.85; font-size: 0.98rem; color: var(--ink);
+    white-space: pre-wrap; display:none;
+  }
+
+  /* -------- songs playlist -------- */
+  #songList{
+    max-width: 480px; margin: 0 auto;
+    display:flex; flex-direction:column; gap:10px;
+  }
+  .song-row{
+    display:flex; align-items:center; gap:14px;
+    background: var(--surface);
+    border: 1px solid var(--hairline);
+    border-radius: 5px;
+    padding: 14px 16px;
+    text-align:left;
+    transition: border-color .3s;
+  }
+  .song-row.playing{ border-color: var(--rose); }
+  .song-playbtn{
+    flex: 0 0 auto;
+    width: 34px; height:34px;
+    border-radius:50%;
+    border: 1px solid var(--hairline);
+    background: transparent;
+    color: var(--ink);
+    cursor:pointer;
+    display:flex; align-items:center; justify-content:center;
+    font-size: 0.85rem;
+    transition: border-color .3s, color .3s;
+  }
+  .song-row.playing .song-playbtn{ border-color: var(--rose); color: var(--rose); }
+  .song-meta{ flex: 1 1 auto; min-width: 0; }
+  .song-title{ font-size: 0.92rem; color: var(--ink); }
+  .song-artist{ font-size: 0.74rem; color: var(--ink-faint); margin-top: 2px; }
+  .song-bars{
+    flex: 0 0 auto; display:flex; align-items:flex-end; gap:2px; height: 16px; width: 20px;
+    opacity: 0;
+    transition: opacity .3s;
+  }
+  .song-row.playing .song-bars{ opacity: 1; }
+  .song-bars span{
+    width:3px; background: var(--rose); display:block;
+    animation: barBounce 0.9s ease-in-out infinite;
+  }
+  .song-bars span:nth-child(2){ animation-delay: 0.15s; }
+  .song-bars span:nth-child(3){ animation-delay: 0.3s; }
+  @keyframes barBounce{
+    0%,100%{ height:4px; }
+    50%{ height:15px; }
+  }
+
+  /* -------- closing -------- */
+  #closing{ text-align:center; padding-bottom: 160px; }
+  #closingWish{
+    font-size: clamp(1.5rem, 4vw, 2.1rem);
+    line-height: 1.5; margin-bottom: 14px;
+  }
+  #closingSub{ color: var(--ink-faint); font-size: 0.85rem; }
+  #fireBtn{
+    margin-top: 34px;
+    background: transparent; border: 1px solid var(--amber); color: var(--amber);
+    padding: 14px 30px; font-size: 0.78rem; letter-spacing: 0.2em; text-transform: uppercase;
+    cursor: pointer; border-radius: 3px;
+    transition: background .3s, color .3s;
+  }
+  #fireBtn:hover{ background: var(--amber); color: #10141f; }
+
+  #fireworksCanvas{ position: fixed; inset:0; z-index: 60; pointer-events:none; }
+
+  /* -------- music control -------- */
+  #musicBar{
+    position: fixed; bottom: 18px; right: 18px; z-index: 90;
+    background: rgba(16,20,31,0.9);
+    border: 1px solid var(--hairline);
+    border-radius: 30px;
+    padding: 10px 16px;
+    display:flex; align-items:center; gap: 10px;
+    backdrop-filter: blur(6px);
+  }
+  #musicToggle{
+    background:none; border:none; color: var(--ink); cursor:pointer; font-size: 1rem;
+    width: 22px;
+  }
+  #volSlider{ width: 90px; accent-color: var(--rose); }
+
+  footer{
+    text-align:center; padding: 30px 24px 50px; color: var(--ink-faint);
+    font-size: 0.72rem; letter-spacing: 0.08em; position:relative; z-index:1;
+  }
+
+  @media (max-width: 560px){
+    section{ padding: 60px 18px; }
+    .terminal{ padding: 24px 18px; }
+    .slideshow{ height: 280px; }
+    #musicBar{ right: 12px; bottom: 12px; padding: 8px 12px; }
+    #volSlider{ width: 64px; }
+  }
+
+  @media (prefers-reduced-motion: reduce){
+    *{ animation-duration: 0.001ms !important; transition-duration: 0.001ms !important; }
+  }
+</style>
+</head>
+<body>
+
+<canvas id="stars"></canvas>
+<canvas id="fireworksCanvas"></canvas>
+
+<!-- ============ INTRO ============ -->
+<div id="intro">
+  <div class="glitch-wrap">
+    <div class="glitch" data-text="THE LETTER I KEPT">THE LETTER I KEPT</div>
+  </div>
+  <p class="intro-sub">A private page about Manu. Not sent to anyone. Just a place to put down what's been sitting in your chest.</p>
+  <button id="enterBtn">Open It</button>
+</div>
+
+<main>
+
+  <!-- ============ LIVE CLOCK ============ -->
+  <section id="clockSection" class="center">
+    <p class="eyebrow">Right now</p>
+    <div id="clock">--:--:--</div>
+    <div id="dateLine">—</div>
+    <div id="countdownLine" style="margin-top:22px; color: var(--rose); font-size:0.85rem; letter-spacing:0.06em;"></div>
+    <div class="divider"></div>
+  </section>
+
+  <!-- ============ THE LETTER ============ -->
+  <section>
+    <p class="eyebrow center">A letter, never sent</p>
+    <div class="terminal">
+      <div class="terminal-head">
+        <span class="dot"></span><span class="dot"></span><span class="dot"></span>
+      </div>
+      <!-- EDIT: replace with your own words. This is written to yourself,
+           about her, not to be delivered to her. -->
+      <div id="letterText"></div>
+    </div>
+  </section>
+
+  <!-- ============ LET IT GO — lantern release ============ -->
+  <section id="letGoSection" class="center">
+    <p class="eyebrow">Something to let go of</p>
+    <h3 style="margin:10px 0 6px;">Release a Lantern</h3>
+    <p style="color:var(--ink-faint); font-size:0.85rem; max-width:420px; margin:0 auto 26px; line-height:1.7;">
+      Each one carries a little of what you're still holding. Watch it drift up and out of view.
+    </p>
+    <div id="lanternStage">
+      <canvas id="lanternCanvas"></canvas>
+    </div>
+    <button id="lanternBtn">Release One</button>
+  </section>
+
+  <!-- ============ SECRET MESSAGE ============ -->
+  <section class="secret-zone">
+    <p class="eyebrow">For no one but me</p>
+    <button id="secretBtn">Open the Secret Message</button>
+  </section>
+
+  <!-- ============ SONGS ============ -->
+  <section id="songsSection" class="center">
+    <p class="eyebrow">Songs that remind me</p>
+    <h3 style="margin:10px 0 24px;">A Small Playlist</h3>
+    <div id="songList"></div>
+  </section>
+
+  <!-- ============ CLOSING ============ -->
+  <section id="closing">
+    <div class="divider" style="margin-bottom:36px;"></div>
+    <!-- EDIT: your closing line -->
+    <div id="closingWish" class="display">Happy birthday, Manu — wherever you are.<br>I hope your life is soft and good.</div>
+    <p id="closingSub">And I hope, one day soon, mine is too — without needing yours in it.</p>
+    <button id="fireBtn">Light It Up</button>
+  </section>
+
+</main>
+
+<footer>written quietly, kept privately — happy birthday</footer>
+
+<!-- ============ SECRET MODAL ============ -->
+<div class="modal-backdrop" id="modalBackdrop">
+  <div class="modal">
+    <p class="eyebrow">Locked</p>
+    <h3 style="margin:10px 0 0;">Enter the password</h3>
+    <input type="password" id="pwInput" placeholder="•••••••" autocomplete="off">
+    <div id="modalError"></div>
+    <div id="secretContent"></div>
+    <div class="modal-actions" id="modalActions">
+      <button id="unlockBtn">Unlock</button>
+      <button id="cancelBtn">Close</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============ MUSIC BAR ============ -->
+<div id="musicBar">
+  <button id="musicToggle">♪</button>
+  <input type="range" id="volSlider" min="0" max="1" step="0.01" value="0.4">
+</div>
+<audio id="bgMusic" loop>
+  <source src="music.mp3" type="audio/mpeg">
+</audio>
+
+<script>
+/* ============================================================
+   CUSTOMIZE THESE VALUES
+   ============================================================ */
+const SECRET_PASSWORD = "onlyme";           // EDIT: change this
+const HER_BIRTHDAY = "2026-07-15T00:00:00"; // EDIT: her birthday (yyyy-mm-dd)
+const SONGS = [
+  // EDIT: add your own tracks. Put the mp3 files in a "songs" folder
+  // next to this file, e.g. songs/1.mp3, and list them here.
+  { title: "Song title one", artist: "Artist name", src: "songs/1.mp3" },
+  { title: "Song title two", artist: "Artist name", src: "songs/2.mp3" }
+];
+
+const LETTER_LINES = [
+  // EDIT: replace with your own words, typed line by line.
+  "It's your birthday again, Manu.",
+  "I'm not writing this to send it to you — I'm writing it so it stops living only in my head.",
+  "I loved you in the plain, unglamorous way that doesn't need an audience. I think you loved me back that way too, for a while, Putti.",
+  "You have a life now. A married life, a whole world I'm not part of, and that's exactly as it should be.",
+  "This page isn't me holding on. It's me putting the last of it down in writing, so I can stop carrying it in silence.",
+  "Wherever you are tonight, I hope it's warm, and easy, and yours."
+];
+
+const SECRET_MESSAGE = [
+  // EDIT: the private, unsent part — for your eyes only.
+  "If I ever said everything out loud, it would sound like this:",
+  "",
+  "Manu — thank you for the years that were good. Thank you for teaching me what steady love feels like, even though it ended.",
+  "I'm not over it yet. But I'm not asking you to fix that anymore — that part's on me now.",
+  "Happy birthday, Putti. I'm letting this be the last time I say it like this."
+];
+
+/* ============================================================
+   Starfield + falling stars
+   ============================================================ */
+const starCanvas = document.getElementById('stars');
+const sctx = starCanvas.getContext('2d');
+let stars = [];
+let shooters = [];
+
+function resizeStars(){
+  starCanvas.width = window.innerWidth;
+  starCanvas.height = window.innerHeight;
+}
+window.addEventListener('resize', resizeStars);
+resizeStars();
+
+function initStars(){
+  stars = [];
+  const count = Math.floor((starCanvas.width * starCanvas.height) / 9000);
+  for(let i=0;i<count;i++){
+    stars.push({
+      x: Math.random()*starCanvas.width,
+      y: Math.random()*starCanvas.height,
+      r: Math.random()*1.4 + 0.3,
+      tw: Math.random()*Math.PI*2,
+      speed: Math.random()*0.015 + 0.005
+    });
+  }
+}
+initStars();
+window.addEventListener('resize', initStars);
+
+function maybeSpawnShooter(){
+  if(Math.random() < 0.012){
+    shooters.push({
+      x: Math.random()*starCanvas.width*0.7,
+      y: Math.random()*starCanvas.height*0.3,
+      len: Math.random()*80+60,
+      speed: Math.random()*6+6,
+      life: 1
+    });
+  }
+}
+
+function drawStars(){
+  sctx.clearRect(0,0,starCanvas.width, starCanvas.height);
+  sctx.fillStyle = '#0a0d16';
+  sctx.fillRect(0,0,starCanvas.width, starCanvas.height);
+
+  for(const s of stars){
+    s.tw += s.speed;
+    const alpha = 0.4 + Math.sin(s.tw)*0.4;
+    sctx.beginPath();
+    sctx.arc(s.x, s.y, s.r, 0, Math.PI*2);
+    sctx.fillStyle = `rgba(236,232,224,${Math.max(0,alpha)})`;
+    sctx.fill();
+  }
+
+  maybeSpawnShooter();
+  shooters.forEach(sh => {
+    sctx.beginPath();
+    const grad = sctx.createLinearGradient(sh.x, sh.y, sh.x - sh.len, sh.y - sh.len*0.4);
+    grad.addColorStop(0, `rgba(217,160,102,${sh.life})`);
+    grad.addColorStop(1, 'rgba(217,160,102,0)');
+    sctx.strokeStyle = grad;
+    sctx.lineWidth = 2;
+    sctx.moveTo(sh.x, sh.y);
+    sctx.lineTo(sh.x - sh.len, sh.y - sh.len*0.4);
+    sctx.stroke();
+    sh.x += sh.speed;
+    sh.y += sh.speed*0.4;
+    sh.life -= 0.02;
+  });
+  shooters = shooters.filter(sh => sh.life > 0 && sh.x < starCanvas.width + 100);
+
+  requestAnimationFrame(drawStars);
+}
+drawStars();
+
+/* ============================================================
+   Intro / glitch unlock + audio
+   ============================================================ */
+const intro = document.getElementById('intro');
+const enterBtn = document.getElementById('enterBtn');
+const bgMusic = document.getElementById('bgMusic');
+const volSlider = document.getElementById('volSlider');
+const musicToggle = document.getElementById('musicToggle');
+
+bgMusic.volume = parseFloat(volSlider.value);
+
+enterBtn.addEventListener('click', () => {
+  intro.classList.add('hidden');
+  bgMusic.play().catch(()=>{ /* file may be missing until user adds music.mp3 */ });
+  startClock();
+  typeLetter();
+});
+
+volSlider.addEventListener('input', () => { bgMusic.volume = parseFloat(volSlider.value); });
+musicToggle.addEventListener('click', () => {
+  if(bgMusic.paused){ bgMusic.play().catch(()=>{}); musicToggle.textContent = '♪'; }
+  else { bgMusic.pause(); musicToggle.textContent = '⏸'; }
+});
+
+/* ============================================================
+   Live clock
+   ============================================================ */
+function startClock(){
+  const clockEl = document.getElementById('clock');
+  const dateEl = document.getElementById('dateLine');
+  const countdownEl = document.getElementById('countdownLine');
+  const bday = new Date(HER_BIRTHDAY);
+
+  function tick(){
+    const now = new Date();
+    clockEl.textContent = now.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit', second:'2-digit'});
+    dateEl.textContent = now.toLocaleDateString([], {weekday:'long', year:'numeric', month:'long', day:'numeric'});
+
+    const diff = bday - now;
+    const isSameDay = now.toDateString() === bday.toDateString();
+    if(isSameDay){
+      countdownEl.textContent = "Today is her birthday — July 15.";
+    } else if(diff > 0){
+      const d = Math.floor(diff / 86400000);
+      const h = Math.floor((diff % 86400000) / 3600000);
+      const m = Math.floor((diff % 3600000) / 60000);
+      countdownEl.textContent = `${d}d ${h}h ${m}m until July 15`;
+    } else {
+      const daysSince = Math.floor(Math.abs(diff) / 86400000);
+      countdownEl.textContent = `${daysSince} days since her birthday`;
+    }
+  }
+  tick();
+  setInterval(tick, 1000);
+}
+
+/* ============================================================
+   Terminal typing effect + soft typing sound (Web Audio, no file needed)
+   ============================================================ */
+let audioCtx;
+function typingBlip(){
+  try{
+    audioCtx = audioCtx || new (window.AudioContext || window.webkitAudioContext)();
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    osc.type = 'square';
+    osc.frequency.value = 700 + Math.random()*200;
+    gain.gain.value = 0.02;
+    osc.connect(gain).connect(audioCtx.destination);
+    osc.start();
+    gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + 0.04);
+    osc.stop(audioCtx.currentTime + 0.05);
+  }catch(e){ /* audio context unavailable */ }
+}
+
+function typeLetter(){
+  const el = document.getElementById('letterText');
+  const cursor = document.createElement('span');
+  cursor.className = 'cursor';
+  let lineIndex = 0, charIndex = 0;
+  let full = "";
+
+  function step(){
+    if(lineIndex >= LETTER_LINES.length){
+      el.appendChild(cursor);
+      return;
+    }
+    const line = LETTER_LINES[lineIndex];
+    if(charIndex <= line.length){
+      full = LETTER_LINES.slice(0,lineIndex).join('\n\n') + (lineIndex>0 ? '\n\n' : '') + line.slice(0,charIndex);
+      el.textContent = full;
+      el.appendChild(cursor);
+      if(charIndex < line.length && line[charIndex] !== ' ') typingBlip();
+      charIndex++;
+      setTimeout(step, 26 + Math.random()*24);
+    } else {
+      lineIndex++; charIndex = 0;
+      setTimeout(step, 420);
+    }
+  }
+  step();
+}
+
+/* ============================================================
+   Songs playlist
+   ============================================================ */
+const songListEl = document.getElementById('songList');
+let currentSongAudio = null;
+let currentSongRow = null;
+
+SONGS.forEach((song, i) => {
+  const row = document.createElement('div');
+  row.className = 'song-row';
+  row.innerHTML = `
+    <button class="song-playbtn" aria-label="Play">▶</button>
+    <div class="song-meta">
+      <div class="song-title">${song.lov}</div>
+      <div class="song-artist">${song.surajk}</div>
+    </div>
+    <div class="song-bars"><span></span><span></span><span></span></div>
+  `;
+  songListEl.appendChild(row);
+
+  const audio = new Audio(song.c:\Users\PRAJWAL\Downloads\song1.mp3.mpeg);
+  const btn = row.querySelector('.song-playbtn');
+
+  btn.addEventListener('click', () => {
+    const isThisPlaying = row.classList.contains('playing');
+
+    if(currentSongAudio && currentSongAudio !== audio){
+      currentSongAudio.pause();
+      if(currentSongRow){
+        currentSongRow.classList.remove('playing');
+        currentSongRow.querySelector('.song-playbtn').textContent = '▶';
+      }
+    }
+
+    if(isThisPlaying){
+      audio.pause();
+      row.classList.remove('playing');
+      btn.textContent = '▶';
+    } else {
+      audio.play().catch(()=>{ /* file may not exist yet — add it to /songs */ });
+      row.classList.add('playing');
+      btn.textContent = '❚❚';
+      currentSongAudio = audio;
+      currentSongRow = row;
+    }
+  });
+
+  audio.addEventListener('ended', () => {
+    row.classList.remove('playing');
+    btn.textContent = '▶';
+  });
+});
+
+/* ============================================================
+   Let It Go — lantern release animation (signature element)
+   ============================================================ */
+const lanternCanvas = document.getElementById('lanternCanvas');
+const lctx = lanternCanvas.getContext('2d');
+let lanterns = [];
+
+function resizeLanternCanvas(){
+  const stage = document.getElementById('lanternStage');
+  lanternCanvas.width = stage.clientWidth;
+  lanternCanvas.height = stage.clientHeight;
+}
+window.addEventListener('resize', resizeLanternCanvas);
+resizeLanternCanvas();
+
+function spawnLantern(){
+  const w = lanternCanvas.width;
+  lanterns.push({
+    x: w*0.15 + Math.random()*w*0.7,
+    y: lanternCanvas.height + 30,
+    sway: Math.random()*Math.PI*2,
+    swaySpeed: 0.015 + Math.random()*0.01,
+    swayAmp: 10 + Math.random()*14,
+    speed: 0.5 + Math.random()*0.4,
+    flicker: Math.random()*Math.PI*2,
+    scale: 0.8 + Math.random()*0.5,
+    life: 1
+  });
+}
+
+function drawLantern(l){
+  const bodyW = 30*l.scale, bodyH = 40*l.scale;
+  const glow = 0.7 + Math.sin(l.flicker)*0.25;
+
+  lctx.save();
+  lctx.translate(l.x, l.y);
+
+  // soft glow
+  const grad = lctx.createRadialGradient(0,0,2,0,0,bodyW*2.2);
+  grad.addColorStop(0, `rgba(217,160,102,${0.45*glow*l.life})`);
+  grad.addColorStop(1, 'rgba(217,160,102,0)');
+  lctx.fillStyle = grad;
+  lctx.beginPath();
+  lctx.arc(0,0,bodyW*2.2,0,Math.PI*2);
+  lctx.fill();
+
+  // lantern body
+  lctx.globalAlpha = l.life;
+  lctx.fillStyle = '#d9a066';
+  lctx.beginPath();
+  lctx.moveTo(-bodyW/2, -bodyH/2);
+  lctx.quadraticCurveTo(-bodyW/2 - 6, 0, -bodyW/2, bodyH/2);
+  lctx.quadraticCurveTo(0, bodyH/2 + 8, bodyW/2, bodyH/2);
+  lctx.quadraticCurveTo(bodyW/2 + 6, 0, bodyW/2, -bodyH/2);
+  lctx.quadraticCurveTo(0, -bodyH/2 - 8, -bodyW/2, -bodyH/2);
+  lctx.closePath();
+  lctx.fill();
+
+  // top and bottom caps
+  lctx.fillStyle = '#8a5a34';
+  lctx.fillRect(-bodyW/2 - 2, -bodyH/2 - 3, bodyW + 4, 4);
+  lctx.fillRect(-bodyW/2 - 2, bodyH/2, bodyW + 4, 4);
+
+  // inner flame glow
+  lctx.fillStyle = `rgba(255,225,180,${glow})`;
+  lctx.beginPath();
+  lctx.arc(0, 4*l.scale, 5*l.scale, 0, Math.PI*2);
+  lctx.fill();
+
+  lctx.restore();
+  lctx.globalAlpha = 1;
+}
+
+function animateLanterns(){
+  lctx.clearRect(0,0,lanternCanvas.width, lanternCanvas.height);
+  lanterns.forEach(l => {
+    l.y -= l.speed;
+    l.sway += l.swaySpeed;
+    l.x += Math.sin(l.sway) * 0.4;
+    l.flicker += 0.12;
+    if(l.y < lanternCanvas.height*0.25) l.life -= 0.012;
+    drawLantern(l);
+  });
+  lanterns = lanterns.filter(l => l.life > 0 && l.y > -60);
+  requestAnimationFrame(animateLanterns);
+}
+animateLanterns();
+
+document.getElementById('lanternBtn').addEventListener('click', spawnLantern);
+// a couple drift up on their own for ambience once the page has loaded
+setTimeout(spawnLantern, 1200);
+setTimeout(spawnLantern, 4200);
+
+/* ============================================================
+   Secret message modal
+   ============================================================ */
+const secretBtn = document.getElementById('secretBtn');
+const modalBackdrop = document.getElementById('modalBackdrop');
+const pwInput = document.getElementById('pwInput');
+const unlockBtn = document.getElementById('unlockBtn');
+const cancelBtn = document.getElementById('cancelBtn');
+const modalError = document.getElementById('modalError');
+const secretContent = document.getElementById('secretContent');
+const modalActions = document.getElementById('modalActions');
+
+secretBtn.addEventListener('click', () => {
+  modalBackdrop.classList.add('show');
+  pwInput.value = ""; modalError.textContent = "";
+  secretContent.style.display = 'none';
+  pwInput.style.display = 'block'; modalActions.style.display='flex';
+  pwInput.focus();
+});
+cancelBtn.addEventListener('click', () => modalBackdrop.classList.remove('show'));
+unlockBtn.addEventListener('click', () => {
+  if(pwInput.value === SECRET_PASSWORD){
+    secretContent.textContent = SECRET_MESSAGE.join('\n');
+    secretContent.style.display = 'block';
+    pwInput.style.display = 'none';
+    modalActions.querySelector('#unlockBtn').style.display = 'none';
+    modalError.textContent = "";
+  } else {
+    modalError.textContent = "That's not it. Try again.";
+  }
+});
+pwInput.addEventListener('keydown', (e) => { if(e.key === 'Enter') unlockBtn.click(); });
+
+/* ============================================================
+   Fireworks
+   ============================================================ */
+const fwCanvas = document.getElementById('fireworksCanvas');
+const fctx = fwCanvas.getContext('2d');
+function resizeFw(){ fwCanvas.width = window.innerWidth; fwCanvas.height = window.innerHeight; }
+window.addEventListener('resize', resizeFw); resizeFw();
+
+let particles = [];
+const fireColors = ['#d9a066','#b98299','#ece8e0','#8189a0'];
+
+function burst(x,y){
+  const count = 46;
+  for(let i=0;i<count;i++){
+    const angle = (Math.PI*2/count)*i;
+    const speed = Math.random()*4+2;
+    particles.push({
+      x, y,
+      vx: Math.cos(angle)*speed,
+      vy: Math.sin(angle)*speed,
+      life: 1,
+      color: fireColors[Math.floor(Math.random()*fireColors.length)]
+    });
+  }
+}
+
+function animateFireworks(){
+  fctx.clearRect(0,0,fwCanvas.width, fwCanvas.height);
+  particles.forEach(p=>{
+    p.x += p.vx; p.y += p.vy; p.vy += 0.03; p.life -= 0.012;
+    fctx.beginPath();
+    fctx.arc(p.x,p.y,2.2,0,Math.PI*2);
+    fctx.fillStyle = p.color.replace(')', '').replace('rgb','rgba');
+    fctx.globalAlpha = Math.max(p.life,0);
+    fctx.fillStyle = p.color;
+    fctx.fill();
+  });
+  fctx.globalAlpha = 1;
+  particles = particles.filter(p=>p.life>0);
+  requestAnimationFrame(animateFireworks);
+}
+animateFireworks();
+
+document.getElementById('fireBtn').addEventListener('click', () => {
+  const w = fwCanvas.width, h = fwCanvas.height;
+  const points = [[w*0.3,h*0.35],[w*0.5,h*0.22],[w*0.7,h*0.4],[w*0.4,h*0.55],[w*0.62,h*0.5]];
+  points.forEach((pt, i) => setTimeout(()=>burst(pt[0],pt[1]), i*260));
+});
+</script>
+</body>
+</html>
